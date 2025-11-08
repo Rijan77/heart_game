@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# Handle API routes
+RewriteRule ^api/([^/]+)/?$ api/$1.php [L,QSA]
+
+# Handle API routes with parameters
+RewriteRule ^api/([^/]+)/([^/]+)/?$ api/$1.php?action=$2 [L,QSA]
