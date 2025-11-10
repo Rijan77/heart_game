@@ -225,7 +225,7 @@ class _GameScreenState extends State<GameScreen> {
                     children: [
                       // Row 1: 1, 2, 3
                       SizedBox(
-                        height: 70.h,
+                        height: 50.h,
                         child: Row(
                           children: [
                             _buildAnswerButton(1),
@@ -234,10 +234,10 @@ class _GameScreenState extends State<GameScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: 5.h),
                       // Row 2: 4, 5, 6
                       SizedBox(
-                        height: 70.h,
+                        height: 50.h,
                         child: Row(
                           children: [
                             _buildAnswerButton(4),
@@ -246,10 +246,10 @@ class _GameScreenState extends State<GameScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: 5.h),
                       // Row 3: 7, 8, 9
                       SizedBox(
-                        height: 70.h,
+                        height: 50.h,
                         child: Row(
                           children: [
                             _buildAnswerButton(7),

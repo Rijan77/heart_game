@@ -16,7 +16,7 @@ class AuthProvider with ChangeNotifier {
   User? get user => _user;
   bool get isLoading => _isLoading;
   String get error => _error;
-  bool get isAuthenticated => _user != null && _token != null;
+  bool get isAuthenticated => _user != null && _token != null;  
 
   AuthProvider() {
     _loadStoredAuth();
