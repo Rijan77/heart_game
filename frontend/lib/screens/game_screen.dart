@@ -58,7 +58,7 @@ class _GameScreenState extends State<GameScreen> {
     });
 
     // Auto-proceed to next question after delay
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
       await _loadNewGame();
     }
