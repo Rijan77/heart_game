@@ -1,7 +1,7 @@
 import 'package:heart_game/models/user_model.dart';
 
 class GameQuestion {
-  final String question; // This can be URL or base64
+  final String question; 
   final int solution;
   final String? imageBase64;
 

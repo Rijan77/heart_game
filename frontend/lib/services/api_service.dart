@@ -5,7 +5,7 @@ import '../models/user_model.dart';
 import '../models/game_model.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.1.76:1234/heart_game/api";
+  static const String baseUrl = "http://10.89.187.232:1234/heart_game/api";
 
   static final FlutterSecureStorage _storage = FlutterSecureStorage();
 

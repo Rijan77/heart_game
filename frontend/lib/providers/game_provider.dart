@@ -47,7 +47,7 @@ class GameProvider with ChangeNotifier {
     if (_currentGame == null) return false;
 
     _isLoading = true;
-    notifyListeners();
+    notifyListeners();// Triggers UI update
 
     try {
       final gameData = {

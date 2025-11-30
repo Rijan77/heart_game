@@ -1,50 +1,58 @@
 <?php
-include_once 'config.php';
+// Turn off ALL error displaying
+error_reporting(0);
+ini_set('display_errors', 0);
 
-class Auth
-{
-    public function register($data)
-    {
-        global $db;
+// Set CORS headers
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-        $username = $data['username'];
-        $email = $data['email'];
-        $password = password_hash($data['password'], PASSWORD_DEFAULT);
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
-        try {
-            $query = "INSERT INTO users SET username=:username, email=:email, password=:password, created_at=NOW()";
-            $stmt = $db->prepare($query);
+// Database configuration
+$host = "localhost";
+$dbname = "heart_game";
+$username = "root";
+$password = "";
 
-            $stmt->bindParam(":username", $username);
-            $stmt->bindParam(":email", $email);
-            $stmt->bindParam(":password", $password);
+try {
+    $db = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Database connection failed"]);
+    exit;
+}
 
-            if ($stmt->execute()) {
-                $user_id = $db->lastInsertId();
-                $token = $this->generateToken($user_id);
+// Main request handler
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
 
-                return [
-                    "status" => "success",
-                    "message" => "User registered successfully",
-                    "token" => $token,
-                    "user" => [
-                        "id" => $user_id,
-                        "username" => $username,
-                        "email" => $email
-                    ]
-                ];
-            }
-        } catch (PDOException $exception) {
-            return ["status" => "error", "message" => "Registration failed: " . $exception->getMessage()];
-        }
+    if ($input === null) {
+        echo json_encode(["status" => "error", "message" => "Invalid JSON input"]);
+        exit;
     }
 
-    public function login($data)
-    {
-        global $db;
+    if (!isset($input['action'])) {
+        echo json_encode(["status" => "error", "message" => "No action specified"]);
+        exit;
+    }
 
-        $email = $data['email'];
-        $password = $data['password'];
+    // Handle login
+    if ($input['action'] == 'login') {
+        if (!isset($input['email']) || !isset($input['password'])) {
+            echo json_encode(["status" => "error", "message" => "Missing email or password"]);
+            exit;
+        }
+
+        $email = trim($input['email']);
+        $password = $input['password'];
 
         try {
             $query = "SELECT id, username, email, password FROM users WHERE email = :email";
@@ -56,7 +64,8 @@ class Auth
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if (password_verify($password, $row['password'])) {
-                    $token = $this->generateToken($row['id']);
+                    // Generate token - MAKE SURE THIS LINE EXISTS
+                    $token = "token_" . bin2hex(random_bytes(16));
 
                     // Update last login
                     $updateQuery = "UPDATE users SET last_login = NOW() WHERE id = :id";
@@ -64,79 +73,91 @@ class Auth
                     $updateStmt->bindParam(":id", $row['id']);
                     $updateStmt->execute();
 
-                    return [
+                    // Return success response
+                    echo json_encode([
                         "status" => "success",
                         "message" => "Login successful",
                         "token" => $token,
                         "user" => [
-                            "id" => $row['id'],
+                            "id" => (int)$row['id'],
                             "username" => $row['username'],
                             "email" => $row['email']
                         ]
-                    ];
+                    ]);
+                    exit;
                 }
             }
 
-            return ["status" => "error", "message" => "Invalid credentials"];
+            echo json_encode(["status" => "error", "message" => "Invalid credentials"]);
+            exit;
         } catch (PDOException $exception) {
-            return ["status" => "error", "message" => "Login failed: " . $exception->getMessage()];
+            http_response_code(500);
+            echo json_encode(["status" => "error", "message" => "Login failed"]);
+            exit;
         }
     }
 
-    private function generateToken($user_id)
-    {
-        $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
-        $payload = json_encode([
-            'user_id' => $user_id,
-            'iat' => time(),
-            'exp' => time() + (60 * 60 * 24) // 24 hours
-        ]);
+    // Handle registration
+    else if ($input['action'] == 'register') {
+        if (!isset($input['username']) || !isset($input['email']) || !isset($input['password'])) {
+            echo json_encode(["status" => "error", "message" => "Missing required fields"]);
+            exit;
+        }
 
-        $base64Header = base64_encode($header);
-        $base64Payload = base64_encode($payload);
+        $username = trim($input['username']);
+        $email = trim($input['email']);
+        $password = $input['password'];
 
-        $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, JWT_SECRET, true);
-        $base64Signature = base64_encode($signature);
+        try {
+            // Check if user exists
+            $checkQuery = "SELECT id FROM users WHERE email = :email OR username = :username";
+            $checkStmt = $db->prepare($checkQuery);
+            $checkStmt->bindParam(":email", $email);
+            $checkStmt->bindParam(":username", $username);
+            $checkStmt->execute();
 
-        return $base64Header . "." . $base64Payload . "." . $base64Signature;
-    }
-
-    public static function verifyToken($token)
-    {
-        $tokenParts = explode('.', $token);
-        if (count($tokenParts) != 3) return false;
-
-        list($base64Header, $base64Payload, $base64Signature) = $tokenParts;
-
-        $signature = base64_decode($base64Signature);
-        $expectedSignature = hash_hmac('sha256', $base64Header . "." . $base64Payload, JWT_SECRET, true);
-
-        if (hash_equals($signature, $expectedSignature)) {
-            $payload = json_decode(base64_decode($base64Payload), true);
-            if ($payload['exp'] > time()) {
-                return $payload['user_id'];
+            if ($checkStmt->rowCount() > 0) {
+                echo json_encode(["status" => "error", "message" => "User already exists"]);
+                exit;
             }
+
+            // Create user
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $insertQuery = "INSERT INTO users (username, email, password) VALUES (:username, :email, :password)";
+            $insertStmt = $db->prepare($insertQuery);
+            $insertStmt->bindParam(":username", $username);
+            $insertStmt->bindParam(":email", $email);
+            $insertStmt->bindParam(":password", $hashedPassword);
+
+            if ($insertStmt->execute()) {
+                $userId = $db->lastInsertId();
+                $token = "token_" . bin2hex(random_bytes(16));
+
+                echo json_encode([
+                    "status" => "success",
+                    "message" => "User registered successfully",
+                    "token" => $token,
+                    "user" => [
+                        "id" => (int)$userId,
+                        "username" => $username,
+                        "email" => $email
+                    ]
+                ]);
+                exit;
+            } else {
+                echo json_encode(["status" => "error", "message" => "Registration failed"]);
+                exit;
+            }
+        } catch (PDOException $exception) {
+            http_response_code(500);
+            echo json_encode(["status" => "error", "message" => "Registration failed"]);
+            exit;
         }
-
-        return false;
+    } else {
+        echo json_encode(["status" => "error", "message" => "Invalid action"]);
+        exit;
     }
-}
-
-// Handle requests
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $auth = new Auth();
-    $input = json_decode(file_get_contents("php://input"), true);
-
-    if (isset($input['action'])) {
-        switch ($input['action']) {
-            case 'register':
-                echo json_encode($auth->register($input));
-                break;
-            case 'login':
-                echo json_encode($auth->login($input));
-                break;
-            default:
-                echo json_encode(["status" => "error", "message" => "Invalid action"]);
-        }
-    }
+} else {
+    echo json_encode(["status" => "error", "message" => "Only POST requests allowed"]);
+    exit;
 }

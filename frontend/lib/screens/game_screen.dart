@@ -143,7 +143,7 @@ class _GameScreenState extends State<GameScreen> {
           ),
           child: Text(
             number.toString(),
-            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -225,7 +225,7 @@ class _GameScreenState extends State<GameScreen> {
                     children: [
                       // Row 1: 1, 2, 3
                       SizedBox(
-                        height: 50.h,
+                        height: 70.h,
                         child: Row(
                           children: [
                             _buildAnswerButton(1),
@@ -237,7 +237,7 @@ class _GameScreenState extends State<GameScreen> {
                       SizedBox(height: 5.h),
                       // Row 2: 4, 5, 6
                       SizedBox(
-                        height: 50.h,
+                        height: 70.h,
                         child: Row(
                           children: [
                             _buildAnswerButton(4),
@@ -249,7 +249,7 @@ class _GameScreenState extends State<GameScreen> {
                       SizedBox(height: 5.h),
                       // Row 3: 7, 8, 9
                       SizedBox(
-                        height: 50.h,
+                        height: 70.h,
                         child: Row(
                           children: [
                             _buildAnswerButton(7),
@@ -269,7 +269,7 @@ class _GameScreenState extends State<GameScreen> {
                               flex: 2,
                               child: Container(
                                 margin: EdgeInsets.all(4.w),
-                                child: ElevatedButton(
+                                child: ElevatedButton( // Button press to submit an answer
                                   onPressed: () => _submitAnswer(0),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _selectedAnswer == 0
