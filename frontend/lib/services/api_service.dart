@@ -5,7 +5,7 @@ import '../models/user_model.dart';
 import '../models/game_model.dart';
 
 class ApiService {
-  static const String baseUrl = "http://10.10.9.3:1234/heart_game/api";
+  static const String baseUrl = "http://192.168.1.76:1234/heart_game/api";
 
   static final FlutterSecureStorage _storage = FlutterSecureStorage();
 
@@ -26,7 +26,6 @@ class ApiService {
     String password,
   ) async {
     try {
-      print('🔵 API Call: Registering user $username');
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth.php'),
@@ -39,9 +38,6 @@ class ApiService {
         }),
       );
 
-      print('🔵 Response Status: ${response.statusCode}');
-      print('🔵 Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         return AuthResponse.fromJson(json.decode(response.body));
       } else {
@@ -51,14 +47,12 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('🔴 Network error: $e');
       return AuthResponse(success: false, message: 'Network error: $e');
     }
   }
 
   static Future<AuthResponse> login(String email, String password) async {
     try {
-      print('🔵 API Call: Logging in $email');
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth.php'),
@@ -70,8 +64,7 @@ class ApiService {
         }),
       );
 
-      print('🔵 Response Status: ${response.statusCode}');
-      print('🔵 Response Body: ${response.body}');
+
 
       if (response.statusCode == 200) {
         return AuthResponse.fromJson(json.decode(response.body));
@@ -82,7 +75,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('🔴 Network error: $e');
       return AuthResponse(success: false, message: 'Network error: $e');
     }
   }
@@ -90,15 +82,12 @@ class ApiService {
   // Game API - FIXED VERSION
   static Future<GameResponse> getNewGame() async {
     try {
-      print('🔵 Fetching new game from API');
 
       final response = await http.get(
         Uri.parse('$baseUrl/game.php?action=new'),
         headers: await _getHeaders(),
       );
 
-      print('🔵 Game API Response Status: ${response.statusCode}');
-      print('🔵 Game API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -124,7 +113,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('🔴 Game API error: $e');
       return GameResponse(success: false, message: 'Failed to load game: $e');
     }
   }
@@ -132,8 +120,7 @@ class ApiService {
   // User Stats API - ENHANCED WITH FALLBACK
   static Future<UserStats> getUserStats() async {
     try {
-      print('🔵 Fetching user statistics');
-
+    
       final response = await http.get(
         Uri.parse('$baseUrl/stats.php?action=user_stats'),
         headers: await _getHeaders(),
@@ -188,22 +175,11 @@ class ApiService {
         Uri.parse('$baseUrl/game.php?action=new'),
       );
 
-      print('🎯 RAW API RESPONSE:');
-      print('Status: ${response.statusCode}');
-      print('Headers: ${response.headers}');
-      print('Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('🎯 PARSED JSON: $data');
 
         if (data['game'] != null) {
           final game = data['game'];
-          print('🎯 GAME DATA:');
-          print('Question type: ${game['question'].runtimeType}');
-          print('Question length: ${game['question']?.toString().length}');
-          print('Solution: ${game['solution']}');
-          print('Solution type: ${game['solution'].runtimeType}');
         }
       }
     } catch (e) {
